@@ -1,0 +1,462 @@
+---
+title: "Coding Fundimentals"
+author: "Rosemary Hartman"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(knitr)
+library(tidyverse)
+library(lubridate)
+```
+# Coding Fundimentals
+
+We don't have a lot of time this afternoon, and this is a big topic. We will try and cover three main topics:
+
+* For Loops
+* Apply functions
+* Custom functions
+* Control flow (if...then)
+
+We will also cover some data manipulation skills while we are at it. But first, a few points to make sure your code is set up for success:
+
+## Code - a little philosophy
+
+If you are in this class, you know a bit about R. You've probably imported datasets, made a couple of graphs, and gotten a lot of error messages. You've probably copied and pasted a lot of code from online, but you might not always understand what you are doing. In this class, we hope to give you a better grasp of some of the basics that will allow you to take your code to the next level. 
+
+
+## Style guide
+
+Some things about writing code are necessary for the code to run. Examples:
+
+* R is case sensitive
+* Variables cannot start with a number
+* Characters must be in quotes
+
+Other things about writing code are best-practice for readability, or are particular to the coder. Examples:
+
+* Be consistent as to how you name your functions, variables, and parameters
+
+  + PascalCase: function names; dataframes; field headings; file names  
+  + camelCase: function parameters  
+  + lower_case (with underscore): variables  
+  
+* Be consistent with variable assignment
+
+  + Both `<-` and `=` work, `<-` is used more frequently
+  
+* Return after left parentheses
+* Keep lines to a max of 80 characters
+* Use indents (RStudio does this for you)
+
+But the most important part about your code is getting it to run! 
+
+```{r, echo=FALSE, eval=TRUE}
+include_graphics("itruns.png")
+```
+
+## Comments
+
+Comment your code. Just do it. All the cool kids do it. 
+
+Anything after a `#` is a comment. It won't do anything to your code, but it will allow you to remember what you were doing when you go back to it later. Trust me, you will forget what you were doing unless you put comments in it. Also, when you try to show it to someone else, it will not make any sense without comments.
+
+"But I'm the only one who reads my code! Do I still need comments?"
+
+Yes, yes you do. Also, I highly recommend showing other people your code. They probably have the answers to the problem you spend three hours trying to solve yesterday.
+
+Useful tip - if you want to save a bit of code for later, you can "comment out" a whole section using ctrl-shft-c
+
+Even Gandalf needs to comment his code. 
+
+```{r, echo=FALSE, eval=TRUE}
+include_graphics("commentyourcode.jpg")
+```
+
+## Projects and Working directories
+
+Hopefully you are already working in projects. If not, start one now! They will make working directories and file handling much, much easier. 
+
+```{r}
+getwd()
+
+
+
+```
+This prints the absolute path for our working directory. From now on we can use relative paths to refer to any file within this working directory. Anything we export will automatically be saved here.
+
+Using a project in RStudio will set your working directory so you don't have to do it at the top of each script.
+
+
+
+
+# Loops and Vectorization
+
+If you've been working in R for a while, you may have heard "Don't use loops in R, they are slow, vectorize instead". This is true, but some processes require using loops, many people find loops more intuitive, and it's important to understand how loops work. 
+
+
+### The basic for loop
+Some text borrowed from R for Data Science: https://r4ds.had.co.nz/iteration.html 
+
+> output <- vector("double", 1:20)
+
+> for (i  in 1:length(output)) {
+> output[[i]] <- mean(df[[i]])
+>}
+
+Every for loop has three components:
+
+The output: output <- vector("double", 1:20). Before you start the loop, you must always allocate sufficient space for the output. This is very important for efficiency: if you grow the for loop at each iteration using c() (for example), your for loop will be very slow.
+
+A general way of creating an empty vector of given length is the vector() function. It has two arguments: the type of the vector (“logical”, “integer”, “double”, “character”, etc) and the length of the vector.
+
+The sequence: i in seq_along(df). This determines what to loop over: each run of the for loop will assign i to a different value from seq_along(df). `i` is used frequently (short for `index`), but you can use any variable you want.
+
+The body: output[[i]] <- median(df[[i]]). This is the code that does the work. It’s run repeatedly, each time with a different value for i. The first iteration will run output[[1]] <- mean(df[[1]]), the second will run output[[2]] <- mean(df[[2]]), and so on.
+
+Now let's try it out!
+
+We will download the Yolo Bypass Beach seine data to use as an example. It comes from the EDI data package available here, and we can download and import the fish data directly using the "read_csv" function. (I downloaded it earlier and saved it as an R data file to save time)
+
+```{r}
+library(tidyverse)
+
+#Yolo = read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=edi.233.3&entityid=807b8cfb5edfd14bd9cd812c124327af")
+load("Yolo.RData")
+
+```
+For our loop example, let's try calculating the annual average striped bass catch. This will give us the opportunity to learn some data manipulation skills too. Let's take a quick look at the dataset using the `str` function:
+
+```{r}
+str(Yolo)
+```
+
+
+It looks like the date got read in as a character instead of a date. We want to change all those dates to the right format. We can use the libridate package to easily convert dates. I don't have time for  a  full tutorial on lubridate, but it's a great package that you should use all the time! They have a set of short-cut functions to convert dates in various formats from characters to dates. `mdy` changes characters in the format "month/day/year" to a date.
+
+
+```{r}
+library(lubridate)
+
+Yolo$SampleDate = mdy(Yolo$SampleDate)
+
+#You can also use the "mutate" function:
+Yolo = mutate(Yolo, Datetime = mdy_hm(Datetime))
+
+#lubridate also has some handy functions for pulling out parts of a date-time value:
+
+Yolo = mutate(Yolo, Month = month(SampleDate), Year = year(SampleDate))
+
+```
+So now that we have the "Year" value, we can calculate an anual average.
+
+But we wanted just the striped bass. so first we need to subset the data using the "filter" function.
+
+```{r}
+unique(Yolo$IEPFishCode)
+
+Stripers = filter(Yolo, IEPFishCode == "STRBAS")
+
+```
+
+So now we can write a loop to calculate the average catch *for* each year.
+
+```{r echo = TRUE}
+#first create a dataframe with one row for each year and empty values for the average catch.
+
+SBave = data.frame(Year = unique(Yolo$Year), Count = NA)
+
+#The for loop defines an index value (i) and then iterates over each value of i
+for (i in 1:nrow(SBave)) {
+  
+  #filter the dataframe to just the year of interest
+  SByear = filter(Stripers, Year == SBave$Year[i])
+  
+  #now calculate the mean count and save it in the dataframe
+ SBave$Count[i] = mean(SByear$Count, na.rm = T)
+}
+
+SBave
+
+```
+So, even though loops in R are slow, that went pretty fast. However, if we had a much bigger data frame, or if you were doing something more complicated, it would take a while. There are a number of "wrappers" for loops that will speed things up quite a bit. But first why don't you try it?
+
+
+### Excercise
+
+1. Use `filter` and a loop to calculate the average catch per species in 2015.
+
+
+
+
+## Apply
+
+The `apply` family of functions includes a number of "wrappers" for loops that make them run faster with less code involved. 
+Let's start with a quick look at the help documentation for `apply`
+
+```{r}
+# `<_>apply` Family Functions
+?apply
+
+```
+There are some shortcut functions for using `apply` on certain data types. For example, you can use `lapply` for lists and `vapply` for vectors. The basic syntax is:
+
+
+```
+lapply(list or vector, FUN = function(x) # do something)
+```
+Let's check out the original data set some more. We can use `lapply` to summarize the unique values of all the character codes in our data frame.
+
+
+```{r fun-lapply}
+
+#The "select' function pulls out particular colums. In this case, all the numeric columns
+lapply(select(Yolo, where(is.numeric)), summary)
+
+
+```
+
+
+
+## Group with dplyr
+
+
+The package dplyr has some nifty tools to create summaries of your data based on particular groups. In this case, we want to group our data frame based on year and apply the `mean` function to Catch. 
+
+Note - we are using pipe operators to string functions together `%>%`
+
+```{r}
+
+SBmeans = Stripers %>%
+  group_by(Year) %>% #group it by Year
+  summarize(MeanCount = mean(Count)) #Calculate Mean Count
+
+SBmeans
+#much faster than the loop!
+
+
+#we can get really complicated if we want
+SBmeans = Stripers %>%
+  group_by(Year) %>% #group it by Year
+  summarize(MeanCount = mean(Count), #Calculate Mean Count
+                    sdCount = sd(Count), #calculate standard deviation
+                    nobs = n(), #number of observations
+                    seCount = sdCount/nobs) #calculate standard error
+View(SBmeans)
+
+#note that you can use your new variables immediately!
+```                    
+
+This can get very complicated very fast. But just take it slow, and don't be afraid to go one step at a time instead of stringing things together. I could break up the 'SBmeans' manipulation like this:
+
+```{r}
+
+#group the dataframe by year
+Strip1 = group_by(Stripers, Year)
+
+#summarize the mean, standard deviation, and number of obervations
+Strip2 = summarize(Strip1, MeanCount = mean(Count), sdCount = sd(Count), nobs = n())
+
+#calcultate standard error
+Strip3 = mutate(Strip2, seCount = sdCount/nobs)
+
+```
+
+I end up with more intermediate steps, which clutters up your workspace a bit, but it allows you to see every step in the process. This is especially useful when debugging or dealing with error messages.
+
+Now it's your turn. 
+
+### Excercise
+
+2. Use group_by and summarize to calculate the mean water temperature by month.
+
+
+
+
+
+# Custom functions
+
+If you want to take R to the next level, you should probably learn to write your own functions. This sounds intimidating, but it will make your life easier in the long run. Even if you don't write your own functions that often, learning how to write them will help you understand the syntax behind functions.
+
+> name <- function(arg_1, arg_2, …) {code here}
+
+The code uses the arguments to produce a value, and the value is returned to the left side of the assignment.
+
+A call to the function then usually takes the form name(arg_1 = x, arg_2 =y) and may occur anywhere in the local environment.
+
+Let's give it a go. First, a silly example:
+
+```{r}
+Likey <- function(ThingIlike, n) {
+  for (i in 1:n) {
+    print(paste("I like", ThingIlike))
+  }
+
+}
+```
+
+Notice that the function `Likey` is now in the global environment under "functions".
+Let's try it out.
+
+```{r}
+
+Likey("cheese", 5)
+Likey("chocolate", 27)
+
+```
+Now let's try a more serious example. What it we want to calculate the mean catch of each fish in our Yolo database by year and graph it? We could filter the dataset one fish at a time and graph them individually, or we can write a function that let's us graph whichever fish we want. 
+
+
+```{r}
+
+
+#let's set up the fish graph function. let's start easy.
+
+FishGraph <- function(DF, #dataframe with the fish data in it
+                      fish #name of fish
+                      ){ 
+ 
+  DF2 = DF %>%
+    filter(IEPFishCode == fish) %>%#filter to fish of interest 
+  group_by(Year) %>%  #and calculate mean catch by year
+  summarize(Count = mean(Count))
+  
+#now print the graph
+    ggplot(DF2, aes(x = Year, y = Count)) + geom_line()
+
+}
+
+#sacrmento suckers
+FishGraph(Yolo, "SACSUC")
+
+#tule perch
+FishGraph(Yolo, "TULPER")
+```
+
+But, what if we wanted to make this code a little more useful? We might want different types of graphs for different fish. 
+
+
+One way we can make functions more flexible, is by using if...then statements. Similar to functions and loops, we can group code with curly brackets and only use code if certain conditions are true.
+
+```{r}
+?Control
+#It will have Four arguments:
+
+FishGraph2 <- function(DF, #dataframe with the fish data in it
+                      fish, #name of fish
+                      type = c("line", "point"), #type of graph (eithe rline or point)
+                      color = "red"){ #Color of line (Default is red)
+ 
+  DF2 = DF %>%
+    filter(IEPFishCode == fish) %>%#filter to fish of interest 
+  group_by(Year) %>%  #and calculate mean catch by year
+  summarize(Count = mean(Count))
+  
+  #If they asked for a line graph, give them a line graph with 'geom_line'
+  if(type == "line") {
+    ggplot(DF2, aes(x = Year, y = Count)) + geom_line(color = color)+
+      ggtitle(fish)
+    
+    #If they asked for a point graph, give them a dot plot with 'geom_point'
+  } else if(type == "point"){
+    ggplot(DF2, aes(x = Year, y = Count)) + geom_point(color = color)+
+      ggtitle(fish)
+    
+    #if they gave you something weird, print an error message (mostly if other people will use this code, but maybe if you just forgot)
+  } else print("type must be either 'line' or 'point'")
+}
+
+FishGraph2(Yolo, "STRBAS", type = "point")
+FishGraph2(Yolo, "WHICAT", type = "line", color = "blue")
+FishGraph2(Yolo, "SACSUC", type = "bar", color = "blue")
+
+```
+
+## More examples
+
+While the group_by and summarize method was faster and easier than a loop for calculating the annual mean, loops are really useful for rendering and saving plots. For example, if we wanted to plot graphs of ALL the fish...
+
+```{r}
+#list of all the fish
+fishes = unique(Yolo$IEPFishCode)
+
+#pretty color pallette
+library(RColorBrewer)
+
+#this just repeats the "Dark2" color palette seven times, so we can recycle it more easily
+mypalette = rep(brewer.pal(8, "Dark2"),  7)
+
+#loop over all the fish
+for (i in 1:length(fishes)) {
+  FishGraph2(Yolo, fish = fishes[i], type = "line", color = mypalette[i])
+    ggsave(filename = paste0("Fish", i, ".png"), 
+         width = 6, 
+         height = 4, 
+         path = "figures")
+}
+
+
+```
+
+
+Custom functions are particularly useful in conjunction with the "apply" family of functions. For example, if I wanted to calculate the maximum Conductivity for each month of the year, I could start by writing a custom function:
+
+```{r}
+
+#The MaxCon function takes two arguments, the month of the year and a dataframe
+MaxCon <- function(Mon, DF) {
+  DF2 = filter(DF, Month == Mon)
+  CondMax = max(DF2$Conductivity, na.rm = T)
+  return(CondMax)
+}
+
+#Putting "return" at the end of your funciton tells what value to return. It
+#will automatically return the last thing you ran, but sometimes it's nice to be specific.
+
+
+#test it out
+MaxCon(Mon = 5, DF = Yolo)
+
+#Now apply it to all the months
+
+sapply(1:12, MaxCon, DF = Yolo)
+
+#you can also just embed your custom function inside the call to 'apply'
+
+#for example, mean turbidity by year
+sapply(1998:2021, function(yr){
+  DF2 = filter(Yolo, Year == yr)
+  MeanTurb = mean(DF2$Turbidity, na.rm = T)
+})
+
+```
+
+
+
+## Excercises
+
+1. Write a function to calculate standard error.
+
+2. Calculate total catch of fishes (all species) for each seine, then calculate the mean catch and standard error (use your function) for each year.
+
+3. Bonus: Graph the mean and standard error.
+
+
+
+### Further reading
+
+* For loops
++ https://www.r-bloggers.com/2015/12/how-to-write-the-first-for-loop-in-r/
++ https://r4ds.had.co.nz/iteration.html 
+
+* Efficient programing
++ https://csgillespie.github.io/efficientR/ 
+
+* Style guides:
++ https://style.tidyverse.org/
++ https://google.github.io/styleguide/Rguide.html
+
+* Cheatsheets
++ https://www.rstudio.com/resources/cheatsheets/ 
