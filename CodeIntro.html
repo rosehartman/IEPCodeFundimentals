@@ -11,7 +11,7 @@
 
 <meta name="author" content="Rosemary Hartman" />
 
-<meta name="date" content="2022-09-13" />
+<meta name="date" content="2022-09-15" />
 
 <title>Coding Fundimentals</title>
 
@@ -365,7 +365,7 @@ pre code {
 
 <h1 class="title toc-ignore">Coding Fundimentals</h1>
 <h4 class="author">Rosemary Hartman</h4>
-<h4 class="date">2022-09-13</h4>
+<h4 class="date">2022-09-15</h4>
 
 </div>
 
@@ -378,6 +378,7 @@ We will try and cover three main topics:</p>
 <li>For Loops</li>
 <li>Apply functions</li>
 <li>Custom functions</li>
+<li>Control flow (if…then)</li>
 </ul>
 <p>We will also cover some data manipulation skills while we are at it.
 But first, a few points to make sure your code is set up for
@@ -455,36 +456,47 @@ we can use relative paths to refer to any file within this working
 directory. Anything we export will automatically be saved here.</p>
 <p>Using a project in RStudio will set your working directory so you
 don’t have to do it at the top of each script.</p>
-<div id="further-reading" class="section level3">
-<h3>Further reading</h3>
-<p><a href="https://csgillespie.github.io/efficientR/" class="uri">https://csgillespie.github.io/efficientR/</a></p>
-</div>
 </div>
 </div>
 <div id="loops-and-vectorization" class="section level1">
 <h1>Loops and Vectorization</h1>
 <p>If you’ve been working in R for a while, you may have heard “Don’t
-use loops in R, they are slow, vector instead”. This is true, but some
-processes require using loops, many people find loops more intuitive,
-and it’s important to understand how loops work.</p>
+use loops in R, they are slow, vectorize instead”. This is true, but
+some processes require using loops, many people find loops more
+intuitive, and it’s important to understand how loops work.</p>
 <div id="the-basic-for-loop" class="section level3">
 <h3>The basic for loop</h3>
+<p>Some text borrowed from R for Data Science: <a href="https://r4ds.had.co.nz/iteration.html" class="uri">https://r4ds.had.co.nz/iteration.html</a></p>
 <blockquote>
-<p>for (name in expr_1) expr_2</p>
+<p>output &lt;- vector(“double”, 1:20)</p>
 </blockquote>
-<p>where name is the loop variable. expr_1 is a vector expression,
-(often a sequence like 1:20), and expr_2 is often a grouped expression
-with its sub-expressions written in terms of the dummy name. expr_2 is
-repeatedly evaluated as name ranges through the values in the vector
-result of expr_1.</p>
+<blockquote>
+<p>for (i in 1:length(output)) { output[[i]] &lt;- mean(df[[i]]) }</p>
+</blockquote>
+<p>Every for loop has three components:</p>
+<p>The output: output &lt;- vector(“double”, 1:20). Before you start the
+loop, you must always allocate sufficient space for the output. This is
+very important for efficiency: if you grow the for loop at each
+iteration using c() (for example), your for loop will be very slow.</p>
+<p>A general way of creating an empty vector of given length is the
+vector() function. It has two arguments: the type of the vector
+(“logical”, “integer”, “double”, “character”, etc) and the length of the
+vector.</p>
+<p>The sequence: i in seq_along(df). This determines what to loop over:
+each run of the for loop will assign i to a different value from
+seq_along(df). <code>i</code> is used frequently (short for
+<code>index</code>), but you can use any variable you want.</p>
+<p>The body: output[[i]] &lt;- median(df[[i]]). This is the code that
+does the work. It’s run repeatedly, each time with a different value for
+i. The first iteration will run output[[1]] &lt;- mean(df[[1]]), the
+second will run output[[2]] &lt;- mean(df[[2]]), and so on.</p>
+<p>Now let’s try it out!</p>
 <p>We will download the Yolo Bypass Beach seine data to use as an
 example. It comes from the EDI data package available here, and we can
 download and import the fish data directly using the “read_csv”
 function. (I downloaded it earlier and saved it as an R data file to
 save time)</p>
-<pre class="r"><code>library(tidyverse)
-
-#Yolo = read_csv(&quot;https://portal.edirepository.org/nis/dataviewer?packageid=edi.233.3&amp;entityid=807b8cfb5edfd14bd9cd812c124327af&quot;)
+<pre class="r"><code>#Yolo = read_csv(&quot;https://portal.edirepository.org/nis/dataviewer?packageid=edi.233.3&amp;entityid=807b8cfb5edfd14bd9cd812c124327af&quot;)
 load(&quot;Yolo.RData&quot;)</code></pre>
 <p>For our loop example, let’s try calculating the annual average
 striped bass catch. This will give us the opportunity to learn some data
@@ -565,9 +577,7 @@ tutorial on lubridate, but it’s a great package that you should use all
 the time! They have a set of short-cut functions to convert dates in
 various formats from characters to dates. <code>mdy</code> changes
 characters in the format “month/day/year” to a date.</p>
-<pre class="r"><code>library(lubridate)
-
-Yolo$SampleDate = mdy(Yolo$SampleDate)
+<pre class="r"><code>Yolo$SampleDate = mdy(Yolo$SampleDate)
 
 #You can also use the &quot;mutate&quot; function:
 Yolo = mutate(Yolo, Datetime = mdy_hm(Datetime))
@@ -634,7 +644,15 @@ SBave</code></pre>
 <p>So, even though loops in R are slow, that went pretty fast. However,
 if we had a much bigger data frame, or if you were doing something more
 complicated, it would take a while. There are a number of “wrappers” for
-loops that will speed things up quite a bit.</p>
+loops that will speed things up quite a bit. But first why don’t you try
+it?</p>
+</div>
+<div id="excercise" class="section level3">
+<h3>Excercise</h3>
+<ol style="list-style-type: decimal">
+<li>Use <code>filter</code> and a loop to calculate the average catch
+per species in 2015.</li>
+</ol>
 </div>
 <div id="apply" class="section level2">
 <h2>Apply</h2>
@@ -652,7 +670,8 @@ lists and <code>vapply</code> for vectors. The basic syntax is:</p>
 <p>Let’s check out the original data set some more. We can use
 <code>lapply</code> to summarize the unique values of all the character
 codes in our data frame.</p>
-<pre class="r"><code>lapply(select(Yolo, where(is.numeric)), summary)</code></pre>
+<pre class="r"><code>#The &quot;select&#39; function pulls out particular colums. In this case, all the numeric columns
+lapply(select(Yolo, where(is.numeric)), summary)</code></pre>
 <pre><code>## $EventID
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##       2    2426    4783    4733    7103    9663 
@@ -716,7 +735,6 @@ codes in our data frame.</p>
 ## $Year
 ##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
 ##    1998    2007    2012    2011    2016    2021</code></pre>
-<p>Think of another apply example.</p>
 </div>
 <div id="group-with-dplyr" class="section level2">
 <h2>Group with dplyr</h2>
@@ -758,12 +776,35 @@ SBmeans = Stripers %&gt;%
 View(SBmeans)
 
 #note that you can use your new variables immediately!</code></pre>
+<p>This can get very complicated very fast. But just take it slow, and
+don’t be afraid to go one step at a time instead of stringing things
+together. I could break up the ‘SBmeans’ manipulation like this:</p>
+<pre class="r"><code>#group the dataframe by year
+Strip1 = group_by(Stripers, Year)
+
+#summarize the mean, standard deviation, and number of obervations
+Strip2 = summarize(Strip1, MeanCount = mean(Count), sdCount = sd(Count), nobs = n())
+
+#calcultate standard error
+Strip3 = mutate(Strip2, seCount = sdCount/nobs)</code></pre>
+<p>I end up with more intermediate steps, which clutters up your
+workspace a bit, but it allows you to see every step in the process.
+This is especially useful when debugging or dealing with error
+messages.</p>
+<p>Now it’s your turn.</p>
+<div id="excercise-1" class="section level3">
+<h3>Excercise</h3>
+<ol start="2" style="list-style-type: decimal">
+<li>Use group_by and summarize to calculate the mean water temperature
+by month.</li>
+</ol>
+</div>
 </div>
 </div>
 <div id="custom-functions" class="section level1">
 <h1>Custom functions</h1>
 <p>If you want to take R to the next level, you should probably learn to
-write your own funcitons. This sounds intimidating, but it will make
+write your own functions. This sounds intimidating, but it will make
 your life easier in the long run. Even if you don’t write your own
 functions that often, learning how to write them will help you
 understand the syntax behind functions.</p>
@@ -891,9 +932,6 @@ ALL the fish…</p>
 <pre class="r"><code>#list of all the fish
 fishes = unique(Yolo$IEPFishCode)
 
-#pretty color pallette
-library(RColorBrewer)
-
 #this just repeats the &quot;Dark2&quot; color palette seven times, so we can recycle it more easily
 mypalette = rep(brewer.pal(8, &quot;Dark2&quot;),  7)
 
@@ -909,6 +947,63 @@ for (i in 1:length(fishes)) {
 ## Removed 24 row(s) containing missing values (geom_path).
 ## Removed 24 row(s) containing missing values (geom_path).
 ## Removed 24 row(s) containing missing values (geom_path).</code></pre>
+<p>Custom functions are particularly useful in conjunction with the
+“apply” family of functions. For example, if I wanted to calculate the
+maximum Conductivity for each month of the year, I could start by
+writing a custom function:</p>
+<pre class="r"><code>#The MaxCon function takes two arguments, the month of the year and a dataframe
+MaxCon &lt;- function(Mon, DF) {
+  DF2 = filter(DF, Month == Mon)
+  CondMax = max(DF2$Conductivity, na.rm = T)
+  return(CondMax)
+}
+
+#Putting &quot;return&quot; at the end of your funciton tells what value to return. It
+#will automatically return the last thing you ran, but sometimes it&#39;s nice to be specific.
+
+
+#test it out
+MaxCon(Mon = 5, DF = Yolo)</code></pre>
+<pre><code>## [1] 1385</code></pre>
+<pre class="r"><code>#Now apply it to all the months
+
+sapply(1:12, MaxCon, DF = Yolo)</code></pre>
+<pre><code>##  [1]  807  807  983 1041 1385 1536 1882 1830 2124 1158 1197  918</code></pre>
+<pre class="r"><code>#you can also just embed your custom function inside the call to &#39;apply&#39;
+
+#for example, mean turbidity by year
+sapply(1998:2021, function(yr){
+  DF2 = filter(Yolo, Year == yr)
+  MeanTurb = mean(DF2$Turbidity, na.rm = T)
+})</code></pre>
+<pre><code>##  [1]      NaN      NaN      NaN 51.60000      NaN      NaN      NaN      NaN
+##  [9]      NaN      NaN 57.70000      NaN      NaN      NaN 89.99342 69.73753
+## [17] 66.81789 62.00469 60.87071 43.84837 29.08636 49.48136 22.35868 22.91385</code></pre>
+</div>
+<div id="excercises" class="section level2">
+<h2>Excercises</h2>
+<ol style="list-style-type: decimal">
+<li><p>Write a function to calculate standard error.</p></li>
+<li><p>Calculate total catch of fishes (all species) for each seine,
+then calculate the mean catch and standard error (use your function) for
+each year.</p></li>
+<li><p>Bonus: Graph the mean and standard error.</p></li>
+</ol>
+<div id="further-reading" class="section level3">
+<h3>Further reading</h3>
+<ul>
+<li><p>For loops</p></li>
+<li><p><a href="https://www.r-bloggers.com/2015/12/how-to-write-the-first-for-loop-in-r/" class="uri">https://www.r-bloggers.com/2015/12/how-to-write-the-first-for-loop-in-r/</a></p></li>
+<li><p><a href="https://r4ds.had.co.nz/iteration.html" class="uri">https://r4ds.had.co.nz/iteration.html</a></p></li>
+<li><p>Efficient programing</p></li>
+<li><p><a href="https://csgillespie.github.io/efficientR/" class="uri">https://csgillespie.github.io/efficientR/</a></p></li>
+<li><p>Style guides:</p></li>
+<li><p><a href="https://style.tidyverse.org/" class="uri">https://style.tidyverse.org/</a></p></li>
+<li><p><a href="https://google.github.io/styleguide/Rguide.html" class="uri">https://google.github.io/styleguide/Rguide.html</a></p></li>
+<li><p>Cheatsheets</p></li>
+<li><p><a href="https://www.rstudio.com/resources/cheatsheets/" class="uri">https://www.rstudio.com/resources/cheatsheets/</a></p></li>
+</ul>
+</div>
 </div>
 </div>
 

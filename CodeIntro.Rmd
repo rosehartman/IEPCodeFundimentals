@@ -10,6 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 library(tidyverse)
 library(lubridate)
+library(RColorBrewer)
 ```
 # Coding Fundimentals
 
@@ -121,7 +122,6 @@ Now let's try it out!
 We will download the Yolo Bypass Beach seine data to use as an example. It comes from the EDI data package available here, and we can download and import the fish data directly using the "read_csv" function. (I downloaded it earlier and saved it as an R data file to save time)
 
 ```{r}
-library(tidyverse)
 
 #Yolo = read_csv("https://portal.edirepository.org/nis/dataviewer?packageid=edi.233.3&entityid=807b8cfb5edfd14bd9cd812c124327af")
 load("Yolo.RData")
@@ -138,7 +138,6 @@ It looks like the date got read in as a character instead of a date. We want to 
 
 
 ```{r}
-library(lubridate)
 
 Yolo$SampleDate = mdy(Yolo$SampleDate)
 
@@ -381,9 +380,6 @@ While the group_by and summarize method was faster and easier than a loop for ca
 ```{r}
 #list of all the fish
 fishes = unique(Yolo$IEPFishCode)
-
-#pretty color pallette
-library(RColorBrewer)
 
 #this just repeats the "Dark2" color palette seven times, so we can recycle it more easily
 mypalette = rep(brewer.pal(8, "Dark2"),  7)
